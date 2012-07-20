@@ -4,10 +4,13 @@ class Queue():
     """
     Base Queue class that defines the generic queue management interface.
     """
-    def enqueue():
+    def enqueue(self):
         raise NotImplementedError
 
-    def dequeue():
+    def dequeue(self):
+        raise NotImplementedError
+
+    def __len__(self):
         raise NotImplementedError
 
 
@@ -40,3 +43,6 @@ class SQSQueue(Queue):
         m = self.queue.read()
 
         return(m.get_body())
+
+    def __len__(self):
+        return self.queue.count()
