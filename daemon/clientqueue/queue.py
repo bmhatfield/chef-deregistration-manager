@@ -1,6 +1,25 @@
 import boto.sqs.connection, boto.sqs.message
 
-class SQSQueue():
+class Queue():
+    """
+    Base Queue class that defines the generic queue management interface.
+    """
+    def enqueue():
+        raise NotImplementedError
+
+    def dequeue():
+        raise NotImplementedError
+
+
+class SQSQueue(Queue):
+    """
+    Provides a generic queue management interface wrapper around Amazon's SQS.
+
+    For more information, please see:
+    http://docs.amazonwebservices.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/Welcome.html
+    http://boto.s3.amazonaws.com/sqs_tut.html
+    """
+    
     def __init__(self, queue_name, access_key, secret_key):
         self.connection = boto.sqs.connection.SQSConnection(access_key, secret_key)
         self.queue = self.connection.get_queue(queue_name)
@@ -21,7 +40,3 @@ class SQSQueue():
         m = self.queue.read()
 
         return(m.get_body())
-
-
-class Queue(SQSQueue):
-    pass
