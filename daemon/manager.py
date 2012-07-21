@@ -1,7 +1,13 @@
-import clientqueue.queue
+#import clientqueue.queue
 
-q = clientqueue.queue.SQSQueue('chef-client-deregistration-queue-arctic', 'ACCESS_KEY', 'SECRET_KEY')
+#q = clientqueue.queue.SQSQueue('chef-client-deregistration-queue-arctic', 'ACCESS_KEY', 'SECRET_KEY')
 
-q.enqueue("test message")
+#q.enqueue("test message")
 
-print q.dequeue()
+#print q.dequeue()
+
+import nagios.urlclient
+
+tc = nagios.urlclient.URLClient()
+
+tc.downtime("yourmom")
