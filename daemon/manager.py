@@ -6,8 +6,8 @@
 
 #print q.dequeue()
 
-import nagios.urlclient
+import nagios.nagcgi
 
-tc = nagios.urlclient.URLClient()
+nagios = nagios.nagcgi.Nagcgi('monitor', userid='nagiosapi', password='', secure=True)
 
-tc.downtime("yourmom")
+nagios.schedule_host_downtime(hostname="")
