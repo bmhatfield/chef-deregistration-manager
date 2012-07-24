@@ -1,6 +1,7 @@
 import time
 import json
 import sys
+import ConfigParser
 
 # Required for importing nagcgi, if not installed
 sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
@@ -18,6 +19,10 @@ WAKE_INTERVAL = 15
 # TODO: Argparse/optparse
 
 # TODO: Configuration File (credentials, etc)
+# http://docs.python.org/library/configparser.html
+config = ConfigParser.RawConfigParser()
+config.read('defaults.cfg')
+
 
 # Configure Chef API Client
 api = chef.autoconfigure()  # TODO: Create API object with values in configuration file instead
