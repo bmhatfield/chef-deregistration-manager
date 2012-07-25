@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+#
+# This application daemonizes and listens to a queue for specifically crafted events.
+# It will then process the event according to type, such as "deregistration", which
+# implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
+#
+APPLICATION_VERSION=0.1
+
 import os
 import sys
 import time
@@ -16,14 +24,20 @@ import nagcgi
 import chef
 
 # Read Command Line Options
-parser = optparse.OptionParser()
-parser.add_option("-c", "--config", dest="config_file", help="write report to FILE")
+parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
 (options, args) = parser.parse_args()
 
+if len(args) < 1:
+    print "Required argument: config_file"
+    sys.exit(1)
+else:
+    config_file = args[0]
+
 # Create Configuration Defaults
 defaults = {
+    'general': {'daemon': True},
     'aws': {'secret_key': None, 'access_key': None},
     'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
     'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
@@ -33,17 +47,25 @@ defaults = {
 config = configobj.ConfigObj()
 config.merge(defaults)
 
-if os.path.exists(options.config_file)
-    user_config = configobj.ConfigObj(options.config_file)
+if os.path.exists(config_file):
+    user_config = configobj.ConfigObj(config_file)
     config.merge(user_config)
 else:
-    print "Configuration file %s not found. This application requires some configuration settings to be set." % (options.config_file)
+    print "Configuration file %s not found. This application requires some configuration settings to be set." % (config_file)
     sys.exit(1)
 
-# Configure Chef API Client
-api = chef.autoconfigure()  # TODO: Create API object with values in configuration file instead
+if options.verbose:
+    print "Running with the following config settings: \n %s" % (config)
 
-sys.exit(0)
+# Configure Chef API Client
+try:
+    if config['chef']['host'] is not None and config['chef']['key'] is not None and config['chef']['client'] is not None:
+        api = chef.ChefApi(config['chef']['host'], config['chef']['key'], config['chef']['client'])
+    else:
+        api = chef.autoconfigure()
+except:
+    print "Could not configure Chef Client." # TODO: Create Log message instead.
+    sys.exit(1)
 
 # TODO: Daemonize
 # Diamond/bin/diamond source
@@ -98,7 +120,7 @@ while True:
         if trigger_chef_run:
             # TODO: Spin off a subprocess for a chef-client run,
             #       assuming we are on a monitor server (async? sync?)
-            print "Triggering chef-client run!"
+            print "Triggering chef-client run!" # TODO: Create Log message instead.
             trigger_chef_run = False
 
         # Go to sleep if there was nothing in the queue.
