@@ -23,6 +23,8 @@ import clientqueue.queue
 import nagcgi
 import chef
 
+# TODO: Configure Logging
+
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
@@ -37,7 +39,7 @@ else:
 
 # Create Configuration Defaults
 defaults = {
-    'general': {'daemon': True},
+    'general': {'daemon': False},
     'aws': {'secret_key': None, 'access_key': None},
     'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
     'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
@@ -67,17 +69,47 @@ except:
     print "Could not configure Chef Client." # TODO: Create Log message instead.
     sys.exit(1)
 
-# TODO: Daemonize
-# Diamond/bin/diamond source
-# -or-
-# http://pypi.python.org/pypi/python-daemon/
+# Daemonize (http://code.activestate.com/recipes/278731/)
+if config['general']['daemon']:
+    print "Daemonizing..."
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit first parent
+            sys.exit(0)
+    except OSError, e:
+        sys.stderr.write("Failed to fork process." % (e))
+        sys.exit(1)
+
+    # Decouple from parent environment
+    os.setsid()
+    os.umask(0)
+
+    # Fork 2
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit second parent
+            sys.exit(0)
+    except OSError, e:
+        sys.stderr.write("Failed to fork process." % (e))
+        sys.exit(1)
+
+    # Close file descriptors so that we can detach
+    sys.stdout.close()
+    sys.stderr.close()
+    sys.stdin.close()
+    os.close(0)
+    os.close(1)
+    os.close(2)
+
 
 # Configure Nagios CGI Client
 nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], password=config['nagios']['password'], debug=options.verbose)
 
 # Configure Deregistration Queue Client
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
-                                config['queue']['access_key'], config['queue']['secret_key'])
+                                config['aws']['access_key'], config['aws']['secret_key'])
 
 # Control Variable
 trigger_chef_run = False
