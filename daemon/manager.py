@@ -10,7 +10,9 @@ import os
 import sys
 import time
 import json
+import logging
 import optparse
+import traceback
 import configobj
 
 # Required for importing nagcgi, if not installed
@@ -20,10 +22,12 @@ sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
 sys.path.append("/Users/bhatfield/Documents/dev/pychef")
 
 import clientqueue.queue
+import message.message
 import nagcgi
 import chef
 
 # TODO: Configure Logging
+logging.basicConfig(level=logging.INFO)
 
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
@@ -32,7 +36,7 @@ parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", defaul
 (options, args) = parser.parse_args()
 
 if len(args) < 1:
-    print "Required argument: config_file"
+    logging.error("Required argument: config_file")
     sys.exit(1)
 else:
     config_file = args[0]
@@ -52,12 +56,10 @@ config.merge(defaults)
 if os.path.exists(config_file):
     user_config = configobj.ConfigObj(config_file)
     config.merge(user_config)
+    logging.debug("Running with the following config settings: \n %s \n %s", config, options)
 else:
-    print "Configuration file %s not found. This application requires some configuration settings to be set." % (config_file)
+    logging.error("Configuration file '%s' not found.", config_file)
     sys.exit(1)
-
-if options.verbose:
-    print "Running with the following config settings: \n %s" % (config)
 
 # Configure Chef API Client
 try:
@@ -66,12 +68,12 @@ try:
     else:
         api = chef.autoconfigure()
 except:
-    print "Could not configure Chef Client." # TODO: Create Log message instead.
+    logging.error("Could not configure Chef Client.")
     sys.exit(1)
 
-# Daemonize (http://code.activestate.com/recipes/278731/)
-if config['general']['daemon']:
-    print "Daemonizing..."
+def daemonize():
+    # Daemonize (http://code.activestate.com/recipes/278731/)
+    logging.info("Daemonizing...")
     try:
         pid = os.fork()
         if pid > 0:
@@ -105,25 +107,40 @@ if config['general']['daemon']:
 
 
 # Configure Nagios CGI Client
-nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], password=config['nagios']['password'], debug=options.verbose)
+if config['nagios']['use']:
+    logging.debug("Configuring Nagios Client: ", config['nagios'])
+    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], 
+                            password=config['nagios']['password'], debug=options.verbose)
 
 # Configure Deregistration Queue Client
+logging.debug("Configuring Queue Client: ", config['queue'])
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
                                 config['aws']['access_key'], config['aws']['secret_key'])
+
+
+if config['general']['daemon']:
+    daemonize()
 
 # Control Variable
 trigger_chef_run = False
 
 while True:
+    logging.debug("Waking up queue poll cycle.")
+
     if len(q) > 0:
         rawmessage = q.dequeue()
 
-        # http://docs.python.org/library/json.html
-        message = json.loads(rawmessage)
+        logging.info("Message found: \n %s", rawmessage)
+
+        try:
+            message = message.message.RegistrationMessage(rawmessage)
+        except Exception as e:
+            logging.exception("Exception while loading message:\n %s", str(e))
+            continue
 
         if message["type"] == "deregistration":
-
             if config['nagios']['use']:
+                logging.info("Scheduling Nagios downtime for %s", message["nagios_name"])
                 nagios.schedule_host_downtime(hostname=message["nagios_name"])
 
             # Create Chef Node Object:
@@ -152,8 +169,9 @@ while True:
         if trigger_chef_run:
             # TODO: Spin off a subprocess for a chef-client run,
             #       assuming we are on a monitor server (async? sync?)
-            print "Triggering chef-client run!" # TODO: Create Log message instead.
+            logging.debug("Triggering chef-client run!")
             trigger_chef_run = False
 
         # Go to sleep if there was nothing in the queue.
-        time.sleep(config['queue']['poll_interval'])
+        logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
+        time.sleep(float(config['queue']['poll_interval']))
