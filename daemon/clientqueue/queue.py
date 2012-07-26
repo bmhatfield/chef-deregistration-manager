@@ -1,3 +1,4 @@
+import logging
 import boto.sqs.connection, boto.sqs.message
 
 class Queue():
@@ -28,7 +29,7 @@ class SQSQueue(Queue):
         self.queue = self.connection.get_queue(queue_name)
 
         if self.queue is None:
-            print "Creating queue: %s" % (queue_name)
+            logging.info("Creating queue: %s", queue_name)
             self.queue = self.connection.create_queue(queue_name)
 
         self.queue.set_message_class(boto.sqs.message.RawMessage)
@@ -42,7 +43,10 @@ class SQSQueue(Queue):
     def dequeue(self):
         m = self.queue.read()
 
-        return(m.get_body())
+        if m is not None:
+            return(m.get_body())
+        else:
+            return("")
 
     def __len__(self):
-        return self.queue.count()
+        return(self.queue.count())
