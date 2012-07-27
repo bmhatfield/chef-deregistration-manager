@@ -1,0 +1,1 @@
+This is the default backup location for chef node and client data, to ensure that any action can be recovered from.

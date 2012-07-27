@@ -1,3 +1,4 @@
 daemon/*.cfg
 daemon/*.log
 daemon/*.pid
+daemon/backups/chef-*
