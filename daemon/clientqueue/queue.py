@@ -44,6 +44,7 @@ class SQSQueue(Queue):
         m = self.queue.read()
 
         if m is not None:
+            # TODO: delete message from queue
             return(m.get_body())
         else:
             return("")
