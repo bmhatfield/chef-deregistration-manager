@@ -22,7 +22,7 @@ sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
 sys.path.append("/Users/bhatfield/Documents/dev/pychef")
 
 import clientqueue.queue
-import message.message
+import message
 import nagcgi
 import chef
 
@@ -54,9 +54,9 @@ config = configobj.ConfigObj()
 config.merge(defaults)
 
 if os.path.exists(config_file):
-    user_config = configobj.ConfigObj(config_file)
+    user_config = configobj.ConfigObj(config_file, unrepr=True)
     config.merge(user_config)
-    logging.debug("Running with the following config settings: \n %s \n %s", config, options)
+    logging.info("Running with the following config settings:\n%s\n%s", config, options)
 else:
     logging.error("Configuration file '%s' not found.", config_file)
     sys.exit(1)
@@ -128,23 +128,21 @@ while True:
     logging.debug("Waking up queue poll cycle.")
 
     if len(q) > 0:
-        rawmessage = q.dequeue()
-
-        logging.info("Message found: \n %s", rawmessage)
-
         try:
-            message = message.message.RegistrationMessage(rawmessage)
+            rawmessage = q.dequeue()
+            logging.info("Message found: \n %s", rawmessage)
+            msg = message.Message(rawmessage)
         except Exception as e:
             logging.exception("Exception while loading message:\n %s", str(e))
             continue
 
-        if message["type"] == "deregistration":
+        if msg.message["type"] == "registration":
             if config['nagios']['use']:
-                logging.info("Scheduling Nagios downtime for %s", message["nagios_name"])
-                nagios.schedule_host_downtime(hostname=message["nagios_name"])
+                logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
+                nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
 
             # Create Chef Node Object:
-            node = chef.Node(message["chef_name"])
+            node = chef.Node(msg.message["chef_name"])
 
             # Dump Chef Node JSON via API
             json.dumps(node.attributes.to_dict()) # TODO: Output to file
@@ -154,7 +152,7 @@ while True:
                 node.delete()
 
             # Create Chef Client Object
-            client = chef.Client(message["chef_name"])
+            client = chef.Client(msg.message["chef_name"])
 
             # Dump Chef Client JSON via API
             json.dumps(client.to_dict()) # TODO: Output to file
