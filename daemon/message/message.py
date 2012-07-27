@@ -1,9 +1,11 @@
 import json
 
-class Message():
+class MessageFormat():
     """
     Generic JSON message class, defines general interface.
     """
+    required_params = []
+
     def __init__(self, raw_message):
         self.message = json.loads(raw_message)
 
@@ -12,18 +14,28 @@ class Message():
 
         self.validate()
 
+    @property
+    def missing(self):
+        return([x for x in self.required_params if x not in self.message])
+
     def validate(self):
-        raise NotImplementedError
+        if len(self.missing) > 0:
+            raise ValueError("%s missing required parameters: %s" % (self.__class__.__name__, self.missing))
 
 
-class RegistrationMessage(Message):
+class RegistrationMessage(MessageFormat):
+    """
+    Class to handle messages of type "registration"
+    """
+    message_type = 'registration'
+    required_params = ["nagios_name", "chef_name"]
+
+
+class SNSMessage(MessageFormat):
     """
     Class to handle messages of type "registration"
     """
 
-    required_params = ["nagios_name", "chef_name"]
+    message_type = ''
+    required_params = [""]
 
-    def validate(self):
-        missing = [x for x in self.required_params if x not in self.message]
-        if len(missing) > 0:
-            raise ValueError("RegistrationMessage missing required parameters: %s" % (missing))
