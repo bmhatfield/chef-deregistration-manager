@@ -17,7 +17,6 @@ import configobj
 
 # Required for importing nagcgi, if not installed
 sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
-
 # Required for importing pychef, if not installed
 sys.path.append("/Users/bhatfield/Documents/dev/pychef")
 
@@ -26,11 +25,6 @@ import message
 import nagcgi
 import chef
 
-
-# Configure Logging
-logging.basicConfig(level=logging.INFO, filename='manager.log')
-
-
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
@@ -38,7 +32,7 @@ parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", defaul
 (options, args) = parser.parse_args()
 
 if len(args) < 1:
-    logging.error("Required argument: config_file")
+    print "Required argument: config_file"
     sys.exit(1)
 else:
     config_file = args[0]
@@ -46,7 +40,7 @@ else:
 
 # Create Configuration Defaults
 defaults = {
-    'general': {'daemon': False},
+    'general': {'daemon': False, 'pidfile': 'manager.pid', 'backup_dir': 'backups'},
     'aws': {'secret_key': None, 'access_key': None},
     'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
     'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
@@ -59,10 +53,20 @@ config.merge(defaults)
 if os.path.exists(config_file):
     user_config = configobj.ConfigObj(config_file, unrepr=True)
     config.merge(user_config)
-    logging.info("Running with the following config settings:\n%s\n%s", config, options)
 else:
-    logging.error("Configuration file '%s' not found.", config_file)
+    print "Configuration file '%s' not found." % (config_file)
     sys.exit(1)
+
+
+# Configure Logging
+if config['general']['daemon']:
+    logging.basicConfig(level=logging.INFO, filename='manager.log')
+else:
+    logging.basicConfig(level=logging.INFO)
+
+
+# Write out configuration values
+logging.info("Running with the following config settings:\n%s\n%s", config, options)
 
 
 # Configure Chef API Client
@@ -133,6 +137,14 @@ def daemonize():
         logging.error("Failed to write child PID file: %s" % (e))
         sys.exit(1)
 
+def write_backup(filename, contents, backup_dir=config['general']['backup_dir']):
+    if os.path.exists(backup_dir) and os.path.isdir(backup_dir):
+        logging.info("Writing backup: %s", os.path.join(backup_dir, filename))
+        handle = open(os.path.join(backup_dir, filename), 'w')
+        handle.write(contents)
+        return True
+    else:
+        raise RuntimeError("Unable to access backup path: '%s'" % (backup_dir))
 
 def main():
     # Control Variable
@@ -159,25 +171,27 @@ def main():
                     logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
                     nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
 
-                # Create Chef Node Object
-                node = chef.Node(msg.message["chef_name"])
+                try:
+                    # Create Chef Node Object
+                    node = chef.Node(msg.message["chef_name"])
 
-                # Dump Chef Node JSON via API
-                json.dumps(node.attributes.to_dict()) # TODO: Output to file
+                    # Dump Chef Node JSON via API, write to backup.
+                    if write_backup("chef-node-%s" % (msg.message["chef_name"]), json.dumps(node.attributes.to_dict())):
+                        if not options.dry_run:
+                            node.delete()   # Remove Chef Node via API
+                except Exception as e:
+                    logging.exception("Exception while deleting chef node:\n %s", str(e))
 
-                # Remove Chef Node via API
-                if not options.dry_run:
-                    node.delete()
+                try:
+                    # Create Chef Client Object
+                    client = chef.Client(msg.message["chef_name"])
 
-                # Create Chef Client Object
-                client = chef.Client(msg.message["chef_name"])
-
-                # Dump Chef Client JSON via API
-                json.dumps(client.to_dict()) # TODO: Output to file
-
-                # Remove Chef Client via API
-                if not options.dry_run:
-                    client.delete()
+                    # Dump Chef Client JSON via API, write to backup.
+                    if write_backup("chef-client-%s" % (msg.message["chef_name"]), json.dumps(client.to_dict())):
+                        if not options.dry_run:
+                            client.delete() # Remove Chef Client via API
+                except Exception as e:
+                    logging.exception("Exception while deleting chef client:\n %s", str(e))
 
                 # Make sure to tell Chef to run
                 trigger_chef_run = True
