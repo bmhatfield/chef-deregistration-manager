@@ -4,7 +4,7 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_VERSION=0.1
+APPLICATION_VERSION=0.2
 
 import os
 import sys
@@ -26,8 +26,10 @@ import message
 import nagcgi
 import chef
 
-# TODO: Configure Logging
-logging.basicConfig(level=logging.INFO)
+
+# Configure Logging
+logging.basicConfig(level=logging.INFO, filename='manager.log')
+
 
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
@@ -40,6 +42,7 @@ if len(args) < 1:
     sys.exit(1)
 else:
     config_file = args[0]
+
 
 # Create Configuration Defaults
 defaults = {
@@ -61,6 +64,7 @@ else:
     logging.error("Configuration file '%s' not found.", config_file)
     sys.exit(1)
 
+
 # Configure Chef API Client
 try:
     if config['chef']['host'] is not None and config['chef']['key'] is not None and config['chef']['client'] is not None:
@@ -70,6 +74,20 @@ try:
 except:
     logging.error("Could not configure Chef Client.")
     sys.exit(1)
+
+
+# Configure Nagios CGI Client
+if config['nagios']['use']:
+    logging.debug("Configuring Nagios Client: ", config['nagios'])
+    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], 
+                            password=config['nagios']['password'], debug=options.verbose)
+
+
+# Configure Deregistration Queue Client
+logging.debug("Configuring Queue Client: ", config['queue'])
+q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
+                                config['aws']['access_key'], config['aws']['secret_key'])
+
 
 def daemonize():
     # Daemonize (http://code.activestate.com/recipes/278731/)
@@ -105,71 +123,76 @@ def daemonize():
     os.close(1)
     os.close(2)
 
+    try:
+        pid = str(os.getpid())
+        pf = file(config['general']['pidfile'],'w+')
+        pf.write("%s\n" % pid)
+        pf.close()
+        logging.debug("Wrote child PID file: %s" % (config['general']['pidfile']))
+    except IOError, e:
+        logging.error("Failed to write child PID file: %s" % (e))
+        sys.exit(1)
 
-# Configure Nagios CGI Client
-if config['nagios']['use']:
-    logging.debug("Configuring Nagios Client: ", config['nagios'])
-    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], 
-                            password=config['nagios']['password'], debug=options.verbose)
 
-# Configure Deregistration Queue Client
-logging.debug("Configuring Queue Client: ", config['queue'])
-q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
-                                config['aws']['access_key'], config['aws']['secret_key'])
+def main():
+    # Control Variable
+    trigger_chef_run = False
 
+    while True:
+        logging.debug("Waking up queue poll cycle.")
+
+        if len(q) > 0:
+            try:
+                rawmessage = q.dequeue()
+                if len(rawmessage) > 0:
+                    logging.info("Message found:\n%s", rawmessage)
+                    msg = message.Message(rawmessage)
+                else:
+                    logging.warning("Disregarding empty message from queue. (SQS bug due to fast re-poll of queue.)")
+                    continue
+            except Exception as e:
+                logging.exception("Exception while loading message:\n %s", str(e))
+                continue
+
+            if msg.message["type"] == "registration" and msg.message["method"] == "deregister":
+                if config['nagios']['use']:
+                    logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
+                    nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
+
+                # Create Chef Node Object
+                node = chef.Node(msg.message["chef_name"])
+
+                # Dump Chef Node JSON via API
+                json.dumps(node.attributes.to_dict()) # TODO: Output to file
+
+                # Remove Chef Node via API
+                if not options.dry_run:
+                    node.delete()
+
+                # Create Chef Client Object
+                client = chef.Client(msg.message["chef_name"])
+
+                # Dump Chef Client JSON via API
+                json.dumps(client.to_dict()) # TODO: Output to file
+
+                # Remove Chef Client via API
+                if not options.dry_run:
+                    client.delete()
+
+                # Make sure to tell Chef to run
+                trigger_chef_run = True
+        else:
+            if trigger_chef_run:
+                # TODO: Spin off a subprocess for a chef-client run,
+                #       assuming we are on a monitor server (async? sync?)
+                logging.info("Triggering chef-client run!")
+                trigger_chef_run = False
+
+            # Go to sleep if there was nothing in the queue.
+            logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
+            time.sleep(config['queue']['poll_interval'])
 
 if config['general']['daemon']:
     daemonize()
 
-# Control Variable
-trigger_chef_run = False
-
-while True:
-    logging.debug("Waking up queue poll cycle.")
-
-    if len(q) > 0:
-        try:
-            rawmessage = q.dequeue()
-            logging.info("Message found: \n %s", rawmessage)
-            msg = message.Message(rawmessage)
-        except Exception as e:
-            logging.exception("Exception while loading message:\n %s", str(e))
-            continue
-
-        if msg.message["type"] == "registration":
-            if config['nagios']['use']:
-                logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
-                nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
-
-            # Create Chef Node Object:
-            node = chef.Node(msg.message["chef_name"])
-
-            # Dump Chef Node JSON via API
-            json.dumps(node.attributes.to_dict()) # TODO: Output to file
-
-            # Remove Chef Node via API
-            if not options.dry_run:
-                node.delete()
-
-            # Create Chef Client Object
-            client = chef.Client(msg.message["chef_name"])
-
-            # Dump Chef Client JSON via API
-            json.dumps(client.to_dict()) # TODO: Output to file
-
-            # Remove Chef Client via API
-            if not options.dry_run:
-                client.delete()
-
-            # Make sure to tell Chef to run.
-            trigger_chef_run = True
-    else:
-        if trigger_chef_run:
-            # TODO: Spin off a subprocess for a chef-client run,
-            #       assuming we are on a monitor server (async? sync?)
-            logging.debug("Triggering chef-client run!")
-            trigger_chef_run = False
-
-        # Go to sleep if there was nothing in the queue.
-        logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
-        time.sleep(float(config['queue']['poll_interval']))
+main()
