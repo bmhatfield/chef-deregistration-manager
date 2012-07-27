@@ -39,7 +39,7 @@ class RegistrationMessage(MessageFormat):
 
 class AutoscalingMessage(MessageFormat):
     """
-    Class to handle messages of type "registration"
+    Class to handle messages from Amazon's Autoscaling -> SNS -> SQS workflow.
     """
     _type = ''
     required_params = [""]
