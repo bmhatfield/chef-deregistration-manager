@@ -1,2 +1,3 @@
 daemon/*.cfg
-
+daemon/*.log
+daemon/*.pid
