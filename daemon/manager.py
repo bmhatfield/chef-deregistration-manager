@@ -75,6 +75,8 @@ try:
         api = chef.ChefApi(config['chef']['host'], config['chef']['key'], config['chef']['client'])
     else:
         api = chef.autoconfigure()
+
+    logging.info("Running against the following chef server:" )
 except:
     logging.error("Could not configure Chef Client.")
     sys.exit(1)
