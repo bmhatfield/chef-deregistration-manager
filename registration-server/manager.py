@@ -166,7 +166,11 @@ def main():
                     # Dump Chef Node JSON via API, write to backup.
                     if write_backup("chef-node-%s" % (msg.message["chef_name"]), json.dumps(node.attributes.to_dict())):
                         if not options.dry_run:
-                            node.delete()   # Remove Chef Node via API
+                            node.delete()
+                            trigger_chef_run = True
+
+                except chef.exceptions.ChefServerNotFoundError:
+                    logging.error("Node removal requested for non-existent chef node '%s'", msg.message["chef_name"])
                 except Exception as e:
                     logging.exception("Exception while deleting chef node:\n %s", str(e))
 
@@ -177,12 +181,13 @@ def main():
                     # Dump Chef Client JSON via API, write to backup.
                     if write_backup("chef-client-%s" % (msg.message["chef_name"]), json.dumps(client.to_dict())):
                         if not options.dry_run:
-                            client.delete() # Remove Chef Client via API
+                            client.delete()
+
+                except chef.exceptions.ChefServerNotFoundError:
+                    logging.error("Client removal requested for non-existent chef client '%s'", msg.message["chef_name"])
                 except Exception as e:
                     logging.exception("Exception while deleting chef client:\n %s", str(e))
 
-                # Make sure to tell Chef to run
-                trigger_chef_run = True
         else:
             if trigger_chef_run:
                 # TODO: Spin off a subprocess for a chef-client run,
