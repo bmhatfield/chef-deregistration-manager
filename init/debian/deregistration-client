@@ -1,0 +1,58 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          chef-deregistration-manager
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0
+# Short-Description: Issue chef registration commands
+# Description:       
+### END INIT INFO
+
+# Source function library.
+if [ -e /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions;
+fi;
+
+DAEMON_DIR="/usr/bin"
+DAEMON=""
+
+start(){
+    echo "Starting $DAEMON..."
+    # TODO: Issue client registration commands
+    #/usr/bin/env python ${DAEMON_DIR}/${DAEMON}
+    log_end_msg $?
+}
+
+stop(){
+    echo "Stopping $DAEMON..."
+    # TODO: Check Runlevel, if 0, then do stop, else, exit 0.
+    #pkill -f ${DAEMON}
+    log_end_msg $?
+}
+
+status(){
+    # TODO: Query chef-client node state against server?
+    #pgrep -f ${DAEMON}
+    log_end_msg $?
+}
+
+case "$1" in
+  start)
+    start 
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart|status}"
+    exit 1
+esac
+
