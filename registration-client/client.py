@@ -6,6 +6,8 @@ APPLICATION_VERSION=0.3
 
 import os
 import sys
+import optparse
+import configobj
 
 # A temporary hack while this is in development
 if os.path.isdir("/Users/bhatfield/Documents/dev"):
@@ -13,8 +15,6 @@ if os.path.isdir("/Users/bhatfield/Documents/dev"):
 
 import clientqueue.queue
 import message
-
-
 
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options]", version="%prog " + str(APPLICATION_VERSION))
@@ -39,10 +39,10 @@ else:
     print "Configuration file '%s' not found." % (options.config)
     sys.exit(1)
 
-
-
 msg = message.Message({'type': 'registration', 'method': 'deregister', 'nagios_name': 'imarlier-vagrant-ubuntu-box', 'chef_name': 'imarlier-vagrant-ubuntu-box'})
 
-q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
-
-q.enqueue(msg)
+if not options.dry_run:
+    q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
+    q.enqueue(msg)
+else:
+    print("Message: %s" %(msg))
