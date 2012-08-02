@@ -65,7 +65,7 @@ try:
     else:
         api = chef.autoconfigure()
 
-    logging.info("Running against the following chef server:" )
+    logging.info("Running against the following chef server: %s" % (api.url))
 except:
     logging.error("Could not configure Chef Client.")
     sys.exit(1)
