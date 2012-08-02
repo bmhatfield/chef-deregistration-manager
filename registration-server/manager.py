@@ -4,7 +4,7 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_VERSION=0.2
+APPLICATION_VERSION=0.3
 
 import os
 import sys
@@ -15,10 +15,11 @@ import optparse
 import traceback
 import configobj
 
-# Required for importing nagcgi, if not installed
-sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
-# Required for importing pychef, if not installed
-sys.path.append("/Users/bhatfield/Documents/dev/pychef")
+# A temporary hack while this is in development
+if os.path.isdir("/Users/bhatfield/Documents/dev"):
+    sys.path.append("/Users/bhatfield/Documents/dev/NagiosCGI")
+    sys.path.append("/Users/bhatfield/Documents/dev/pychef")
+    sys.path.append("lib")
 
 import clientqueue.queue
 import message
@@ -26,17 +27,11 @@ import nagcgi
 import chef
 
 # Read Command Line Options
-parser = optparse.OptionParser(usage="%prog [options] config_file", version="%prog " + str(APPLICATION_VERSION))
+parser = optparse.OptionParser(usage="%prog [options]", version="%prog " + str(APPLICATION_VERSION))
+parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/server.cfg", help="Configuration file path")
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
 (options, args) = parser.parse_args()
-
-if len(args) < 1:
-    print "Required argument: config_file"
-    sys.exit(1)
-else:
-    config_file = args[0]
-
 
 # Create Configuration Defaults
 defaults = {
@@ -50,11 +45,11 @@ defaults = {
 config = configobj.ConfigObj()
 config.merge(defaults)
 
-if os.path.exists(config_file):
-    user_config = configobj.ConfigObj(config_file, unrepr=True)
+if os.path.exists(options.config):
+    user_config = configobj.ConfigObj(options.config, unrepr=True)
     config.merge(user_config)
 else:
-    print "Configuration file '%s' not found." % (config_file)
+    print "Configuration file '%s' not found." % (options.config)
     sys.exit(1)
 
 
