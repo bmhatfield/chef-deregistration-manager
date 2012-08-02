@@ -125,14 +125,6 @@ def daemonize():
         logging.error("Failed to write child PID file: %s" % (e))
         sys.exit(1)
 
-def write_backup(filename, contents, backup_dir=config['general']['backup_dir']):
-    if os.path.exists(backup_dir) and os.path.isdir(backup_dir):
-        logging.info("Writing backup: %s", os.path.join(backup_dir, filename))
-        handle = open(os.path.join(backup_dir, filename), 'w')
-        handle.write(contents)
-        return True
-    else:
-        raise RuntimeError("Unable to access backup path: '%s'" % (backup_dir))
 
 def main():
     # Control Variable
@@ -147,46 +139,20 @@ def main():
                 if len(rawmessage) > 0:
                     logging.info("Message found:\n%s", rawmessage)
                     msg = message.Message(rawmessage)
+
+                    if not options.dry_run:
+                        messagehandler = message.ChefRegistrationHandler(api)
+                        messagehandler.process(msg)
                 else:
                     logging.warning("Disregarding empty message from queue. (SQS bug due to fast re-poll of queue.)")
                     continue
             except Exception as e:
-                logging.exception("Exception while loading message:\n %s", str(e))
+                logging.exception("Exception while processing message:\n %s", str(e))
                 continue
 
-            if msg.message["type"] == "registration" and msg.message["method"] == "deregister":
-                if config['nagios']['use']:
+            if config['nagios']['use']:
                     logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
                     nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
-
-                try:
-                    # Create Chef Node Object
-                    node = chef.Node(msg.message["chef_name"])
-
-                    # Dump Chef Node JSON via API, write to backup.
-                    if write_backup("chef-node-%s" % (msg.message["chef_name"]), json.dumps(node.attributes.to_dict())):
-                        if not options.dry_run:
-                            node.delete()
-                            trigger_chef_run = True
-
-                except chef.exceptions.ChefServerNotFoundError:
-                    logging.error("Node removal requested for non-existent chef node '%s'", msg.message["chef_name"])
-                except Exception as e:
-                    logging.exception("Exception while deleting chef node:\n %s", str(e))
-
-                try:
-                    # Create Chef Client Object
-                    client = chef.Client(msg.message["chef_name"])
-
-                    # Dump Chef Client JSON via API, write to backup.
-                    if write_backup("chef-client-%s" % (msg.message["chef_name"]), json.dumps(client.to_dict())):
-                        if not options.dry_run:
-                            client.delete()
-
-                except chef.exceptions.ChefServerNotFoundError:
-                    logging.error("Client removal requested for non-existent chef client '%s'", msg.message["chef_name"])
-                except Exception as e:
-                    logging.exception("Exception while deleting chef client:\n %s", str(e))
 
         else:
             if trigger_chef_run:
