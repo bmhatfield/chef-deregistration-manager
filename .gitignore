@@ -1,4 +1,4 @@
-daemon/*.cfg
-daemon/*.log
-daemon/*.pid
-daemon/backups/chef-*
+registration-server/*.cfg
+registration-server/*.log
+registration-server/*.pid
+registration-server/backups/chef-*
