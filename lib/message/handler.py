@@ -12,8 +12,9 @@ import chef
 
 class ChefRegistrationHandler():
 
-    def __init__(self, chef_api):
+    def __init__(self, chef_api, backup_dir):
         self.api = chef_api
+        self.backup_dir = backup_dir
 
 
     def process(self, message):
@@ -21,10 +22,10 @@ class ChefRegistrationHandler():
             self.deregister(message)
 
 
-    def backup(self, filename, contents, backup_dir='backups'):
-        if os.path.exists(backup_dir) and os.path.isdir(backup_dir):
-            logging.info("Writing backup: %s", os.path.join(backup_dir, filename))
-            handle = open(os.path.join(backup_dir, filename), 'w')
+    def backup(self, filename, contents):
+        if os.path.exists(self.backup_dir) and os.path.isdir(self.backup_dir):
+            logging.info("Writing backup: %s", os.path.join(self.backup_dir, filename))
+            handle = open(os.path.join(self.backup_dir, filename), 'w')
             handle.write(contents)
             return True
         else:

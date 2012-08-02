@@ -70,6 +70,9 @@ except:
     logging.error("Could not configure Chef Client.")
     sys.exit(1)
 
+# Configure ChefRegistrationHandler
+messagehandler = message.ChefRegistrationHandler(api, backup_dir=config['general']['backup_dir'])
+
 # Configure Nagios CGI Client
 if config['nagios']['use']:
     logging.debug("Configuring Nagios Client: ", config['nagios'])
@@ -141,19 +144,18 @@ def main():
                     msg = message.Message(rawmessage)
 
                     if not options.dry_run:
-                        messagehandler = message.ChefRegistrationHandler(api)
+                        if config['nagios']['use']:
+                            logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
+                            nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
+
                         messagehandler.process(msg)
+                        trigger_chef_run = True
                 else:
                     logging.warning("Disregarding empty message from queue. (SQS bug due to fast re-poll of queue.)")
                     continue
             except Exception as e:
                 logging.exception("Exception while processing message:\n %s", str(e))
                 continue
-
-            if config['nagios']['use']:
-                    logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
-                    nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
-
         else:
             if trigger_chef_run:
                 # TODO: Spin off a subprocess for a chef-client run,
