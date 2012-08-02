@@ -7,7 +7,7 @@ class MessageFormat():
     required_params = None
 
     def __init__(self, raw_message):
-        if type(raw_message) == type(str):
+        if isinstance(raw_message, str) or isinstance(raw_message, unicode):
             self.message = json.loads(raw_message)
         else:
             self.message = raw_message
