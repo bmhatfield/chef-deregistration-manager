@@ -1,4 +1,4 @@
-registration-server/*.cfg
-registration-server/*.log
-registration-server/*.pid
+registration-*/*.cfg
+registration-*/*.log
+registration-*/*.pid
 registration-server/backups/chef-*
