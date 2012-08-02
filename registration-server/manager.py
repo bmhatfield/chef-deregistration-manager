@@ -33,25 +33,21 @@ parser.add_option("-v", "--verbose", action="store_true", dest="verbose", defaul
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
 (options, args) = parser.parse_args()
 
-# Create Configuration Defaults
-defaults = {
-    'general': {'daemon': False, 'pidfile': 'manager.pid', 'backup_dir': 'backups'},
-    'aws': {'secret_key': None, 'access_key': None},
-    'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
-    'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
-    'chef': {'host': 'localhost', 'key': 'client.pem', 'client': None}
-}
-
-config = configobj.ConfigObj()
-config.merge(defaults)
-
 if os.path.exists(options.config):
+    config = configobj.ConfigObj()
     user_config = configobj.ConfigObj(options.config, unrepr=True)
+    defaults = {
+        'general': {'daemon': False, 'pidfile': 'manager.pid', 'backup_dir': 'backups'},
+        'aws': {'secret_key': None, 'access_key': None},
+        'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
+        'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
+        'chef': {'host': 'localhost', 'key': 'client.pem', 'client': None}
+    }
+    config.merge(defaults)
     config.merge(user_config)
 else:
     print "Configuration file '%s' not found." % (options.config)
     sys.exit(1)
-
 
 # Configure Logging
 if config['general']['daemon']:
@@ -59,10 +55,8 @@ if config['general']['daemon']:
 else:
     logging.basicConfig(level=logging.INFO)
 
-
 # Write out configuration values
 logging.info("Running with the following config settings:\n%s\n%s", config, options)
-
 
 # Configure Chef API Client
 try:
@@ -76,19 +70,16 @@ except:
     logging.error("Could not configure Chef Client.")
     sys.exit(1)
 
-
 # Configure Nagios CGI Client
 if config['nagios']['use']:
     logging.debug("Configuring Nagios Client: ", config['nagios'])
     nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], 
                             password=config['nagios']['password'], debug=options.verbose)
 
-
 # Configure Deregistration Queue Client
 logging.debug("Configuring Queue Client: ", config['queue'])
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
                                 config['aws']['access_key'], config['aws']['secret_key'])
-
 
 def daemonize():
     # Daemonize (http://code.activestate.com/recipes/278731/)
