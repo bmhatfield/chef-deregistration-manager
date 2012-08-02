@@ -1,0 +1,65 @@
+#!/bin/bash
+# chkconfig:   - 25 75
+# description: chef-deregistration-manager
+# processname: chef-deregistration-manager
+
+# Source function library.
+if [ -e /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions;
+fi;
+
+DAEMON_DIR="/usr/bin"
+DAEMON="chef-deregistration-manager"
+CONFIG=/etc/chef-deregistration/manager.cfg
+
+start(){
+    echo "Starting $DAEMON..."
+    /usr/bin/env python ${DAEMON_DIR}/${DAEMON} ${CONFIG}
+    if [ $? -eq 0 ]; then
+        echo_success
+    else
+        echo_failure
+    fi;
+    echo ""
+}
+
+stop(){
+    echo "Stopping $DAEMON..."
+    pkill -f ${DAEMON}
+    if [ $? -eq 0 ]; then
+        echo_success
+    else
+        echo_failure
+    fi;
+    echo ""
+}
+
+status(){
+    pgrep -f ${DAEMON}
+    if [ $? -eq 0 ]; then
+        echo_success
+    else
+        echo_failure
+    fi;
+    echo ""
+}
+
+case "$1" in
+  start)
+    start 
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart|status}"
+    exit 1
+esac
+
