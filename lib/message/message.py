@@ -7,7 +7,10 @@ class MessageFormat():
     required_params = None
 
     def __init__(self, raw_message):
-        self.message = json.loads(raw_message)
+        if type(raw_message) == type(str):
+            self.message = json.loads(raw_message)
+        else:
+            self.message = raw_message
 
         if "type" not in self.message:
             raise ValueError("Message missing 'type' key.")
@@ -63,6 +66,9 @@ class Message():
                 return f
 
         raise ValueError("Message format unsupported.")
+
+    def __repr__(self):
+        return json.dumps(self.message)
 
 
 
