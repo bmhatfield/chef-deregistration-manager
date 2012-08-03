@@ -2,7 +2,8 @@
 from distutils.core import setup
 import platform
 
-distro = platform.dist()[0]
+#distro = platform.dist()[0]
+distro = 'debian'
 version = "0.7"
 
 setup(name="chef-registration-server",
@@ -26,7 +27,7 @@ setup(name="chef-registration-client",
       url="https://github.com/bmhatfield/chef-deregistration-manager",
       packages=['clientqueue', 'message'],
       package_dir={'': 'lib'},
-      data_files=[('/etc/init.d/', ["init/%s/registration-server" % distro]),
+      data_files=[('/etc/init.d/', ["init/%s/registration-client" % distro]),
                   ("/etc/chef-registration/client", ["registration-client/example.cfg"])],
       scripts=["registration-client/registration-client"]
     )
