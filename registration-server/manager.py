@@ -74,13 +74,11 @@ messagehandler = message.ChefRegistrationHandler(api, backup_dir=config['general
 # Configure Nagios CGI Client
 if config['nagios']['use']:
     logging.debug("Configuring Nagios Client: ", config['nagios'])
-    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], 
-                            password=config['nagios']['password'], debug=options.verbose)
+    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], password=config['nagios']['password'], debug=options.verbose)
 
 # Configure Deregistration Queue Client
 logging.debug("Configuring Queue Client: ", config['queue'])
-q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
-                                config['aws']['access_key'], config['aws']['secret_key'])
+q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
 
 
 def daemonize():
