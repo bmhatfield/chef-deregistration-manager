@@ -3,3 +3,5 @@ registration-*/*.log
 registration-*/*.pid
 registration-server/backups/chef-*
 backups
+build
+dist
