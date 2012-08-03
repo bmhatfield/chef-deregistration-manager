@@ -26,7 +26,7 @@ import chef
 
 # Read Command Line Options
 parser = optparse.OptionParser(usage="%prog [options]", version="%prog " + str(APPLICATION_VERSION))
-parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/server.cfg", help="Configuration file path")
+parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/server/example.cfg", help="Configuration file path")
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
 (options, args) = parser.parse_args()

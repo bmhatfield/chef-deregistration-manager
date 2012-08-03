@@ -22,7 +22,7 @@ parser.add_option("--method", dest="method", default="deregister", help="The cli
 parser.add_option("--chef-node", dest="chef_node", default=None, help="[REQUIRED] The chef node name")
 parser.add_option("--nagios-node", dest="nagios_node", default=None, help="The name of the nagios client to put in downtime. If this is not specified, it will be set to the value of --chef_node")
 
-parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/client.cfg", help="Configuration file path")
+parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/client/example.cfg", help="Configuration file path")
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
 (options, args) = parser.parse_args()
