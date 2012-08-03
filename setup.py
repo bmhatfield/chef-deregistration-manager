@@ -26,8 +26,8 @@ setup(name="chef-registration-server",
       scripts=["registration-server/registration-server"]
     )
 
-if os.path.isdir("deb_dist/chef-registration-client-%s" % (version)):
-    shutil.rmtree("deb_dist/chef-registration-client-%s" % (version))
+if os.path.isdir("deb_dist/chef-registration-server-%s" % (version)):
+    shutil.rmtree("deb_dist/chef-registration-server-%s" % (version))
 
 setup(name="chef-registration-client",
       version=version,
