@@ -6,6 +6,8 @@ version = "0.7"
 
 if platform.dist()[0] == 'Ubuntu':
     distro = 'debian'
+elif platform.uname()[0] == 'Darwin':
+    distro = 'debian'  # A little hack for Mac testing
 else:
     distro = platform.dist()[0]
 
