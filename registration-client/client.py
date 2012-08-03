@@ -2,7 +2,7 @@
 #
 #
 #
-APPLICATION_VERSION=0.3
+APPLICATION_VERSION = 0.3
 
 import os
 import sys
@@ -62,5 +62,4 @@ if not options.dry_run:
         print "Queueing Message: %s" % (msg)
     q.enqueue(msg)
 else:
-    print("Message: %s" %(msg))
-
+    print("Message: %s" % (msg))

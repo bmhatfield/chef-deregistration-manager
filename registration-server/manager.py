@@ -4,15 +4,13 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_VERSION=0.3
+APPLICATION_VERSION = 0.3
 
 import os
 import sys
 import time
-import json
 import logging
 import optparse
-import traceback
 import configobj
 
 # A temporary hack while this is in development
@@ -84,6 +82,7 @@ logging.debug("Configuring Queue Client: ", config['queue'])
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), 
                                 config['aws']['access_key'], config['aws']['secret_key'])
 
+
 def daemonize():
     # Daemonize (http://code.activestate.com/recipes/278731/)
     logging.info("Daemonizing...")
@@ -120,7 +119,7 @@ def daemonize():
 
     try:
         pid = str(os.getpid())
-        pf = file(config['general']['pidfile'],'w+')
+        pf = file(config['general']['pidfile'], 'w+')
         pf.write("%s\n" % pid)
         pf.close()
         logging.debug("Wrote child PID file: %s" % (config['general']['pidfile']))

@@ -1,5 +1,7 @@
 import logging
-import boto.sqs.connection, boto.sqs.message
+import boto.sqs.connection
+import boto.sqs.message
+
 
 class Queue():
     """
@@ -23,7 +25,7 @@ class SQSQueue(Queue):
     http://docs.amazonwebservices.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/Welcome.html
     http://boto.s3.amazonaws.com/sqs_tut.html
     """
-    
+
     def __init__(self, queue_name, access_key, secret_key):
         self.connection = boto.sqs.connection.SQSConnection(access_key, secret_key)
         self.queue = self.connection.get_queue(queue_name)
@@ -37,7 +39,7 @@ class SQSQueue(Queue):
     def enqueue(self, message):
         m = boto.sqs.message.RawMessage()
         m.set_body(message)
-        
+
         self.queue.write(m)
 
     def dequeue(self):

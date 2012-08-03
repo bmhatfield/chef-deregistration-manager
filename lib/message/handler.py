@@ -16,11 +16,9 @@ class ChefRegistrationHandler():
         self.api = chef_api
         self.backup_dir = backup_dir
 
-
     def process(self, message):
         if message.message["type"] == "registration" and message.message["method"] == "deregister":
             self.deregister(message)
-
 
     def backup(self, filename, contents):
         if os.path.exists(self.backup_dir) and os.path.isdir(self.backup_dir):
@@ -29,8 +27,7 @@ class ChefRegistrationHandler():
             handle.write(contents)
             return True
         else:
-            raise RuntimeError("Unable to access backup path: '%s'" % (backup_dir))
-
+            raise RuntimeError("Unable to access backup path: '%s'" % (self.backup_dir))
 
     def deregister(self, message):
         try:

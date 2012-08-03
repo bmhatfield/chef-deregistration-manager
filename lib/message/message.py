@@ -1,5 +1,6 @@
 import json
 
+
 class MessageFormat():
     """
     Defines interface and common methods for message formats.
@@ -69,10 +70,3 @@ class Message():
 
     def __repr__(self):
         return json.dumps(self.message)
-
-
-
-
-
-
-
