@@ -4,7 +4,7 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_VERSION = 0.3
+APPLICATION_VERSION = 0.7
 
 import os
 import sys
