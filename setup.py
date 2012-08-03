@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from distutils.core import setup
 import platform
+import shutil
+import os
 
 version = "0.7"
 
@@ -23,6 +25,9 @@ setup(name="chef-registration-server",
                   ("/etc/chef-registration/server", ["registration-server/example.cfg"])],
       scripts=["registration-server/registration-server"]
     )
+
+if os.path.isdir("deb_dist/chef-registration-client-%s" % (version)):
+    shutil.rmtree("deb_dist/chef-registration-client-%s" % (version))
 
 setup(name="chef-registration-client",
       version=version,
