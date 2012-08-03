@@ -2,9 +2,12 @@
 from distutils.core import setup
 import platform
 
-#distro = platform.dist()[0]
-distro = 'debian'
 version = "0.7"
+
+if platform.dist()[0] == 'Ubuntu':
+    distro = 'debian'
+else:
+    distro = platform.dist()[0]
 
 setup(name="chef-registration-server",
       version=version,
