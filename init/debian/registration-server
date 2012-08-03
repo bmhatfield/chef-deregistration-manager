@@ -14,13 +14,12 @@ if [ -e /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions;
 fi;
 
-DAEMON_DIR="/usr/bin"
-DAEMON="chef-deregistration-manager"
-CONFIG=/etc/chef-deregistration/manager.cfg
+DAEMON_DIR="/opt/chef-registration"
+DAEMON="registration-server"
 
 start(){
     echo "Starting $DAEMON..."
-    /usr/bin/env python ${DAEMON_DIR}/${DAEMON} ${CONFIG}
+    ${DAEMON_DIR}/${DAEMON}
     log_end_msg $?
 }
 
@@ -53,4 +52,3 @@ case "$1" in
     echo $"Usage: $0 {start|stop|restart|status}"
     exit 1
 esac
-

@@ -14,26 +14,28 @@ if [ -e /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions;
 fi;
 
-DAEMON_DIR="/usr/bin"
-DAEMON=""
+DAEMON_DIR="/opt/chef-registration"
+DAEMON="registration-client"
 
 start(){
     echo "Starting $DAEMON..."
-    # TODO: Issue client registration commands
-    #/usr/bin/env python ${DAEMON_DIR}/${DAEMON}
+    /usr/bin/true
     log_end_msg $?
 }
 
 stop(){
-    echo "Stopping $DAEMON..."
-    # TODO: Check Runlevel, if 0, then do stop, else, exit 0.
-    #pkill -f ${DAEMON}
-    log_end_msg $?
+    if [ "`runlevel | cut -d " " -f 2`" == 0 ]; then
+        echo "Stopping $DAEMON..."
+        ${DAEMON_DIR}/${DAEMON} --chef-node `hostname -f`
+        log_end_msg $?
+    else
+        echo "Incorrect runlevel, No-op";
+        log_end_msg /usr/bin/true
+    fi;
 }
 
 status(){
-    # TODO: Query chef-client node state against server?
-    #pgrep -f ${DAEMON}
+    /usr/bin/true
     log_end_msg $?
 }
 

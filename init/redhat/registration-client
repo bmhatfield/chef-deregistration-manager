@@ -13,8 +13,7 @@ DAEMON=""
 
 start(){
     echo "Starting $DAEMON..."
-    # TODO: Issue client registration commands
-    #/usr/bin/env python ${DAEMON_DIR}/${DAEMON}
+    /usr/bin/true
     if [ $? -eq 0 ]; then
         echo_success
     else
@@ -24,9 +23,13 @@ start(){
 }
 
 stop(){
-    echo "Stopping $DAEMON..."
-    # TODO: Check Runlevel, if 0, then do stop, else, exit 0.
-    #pkill -f ${DAEMON}
+    if [ "`runlevel | cut -d " " -f 2`" == 0 ]; then
+        echo "Stopping $DAEMON..."
+        ${DAEMON_DIR}/${DAEMON} --chef-node `hostname -f`
+    else
+        echo "Skipping execution"
+    fi;
+    
     if [ $? -eq 0 ]; then
         echo_success
     else

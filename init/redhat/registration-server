@@ -8,13 +8,12 @@ if [ -e /etc/rc.d/init.d/functions ]; then
     . /etc/rc.d/init.d/functions;
 fi;
 
-DAEMON_DIR="/usr/bin"
-DAEMON="chef-deregistration-manager"
-CONFIG=/etc/chef-deregistration/manager.cfg
+DAEMON_DIR="/opt/chef-registration"
+DAEMON="registration-server"
 
 start(){
     echo "Starting $DAEMON..."
-    /usr/bin/env python ${DAEMON_DIR}/${DAEMON} ${CONFIG}
+    ${DAEMON_DIR}/${DAEMON}
     if [ $? -eq 0 ]; then
         echo_success
     else
