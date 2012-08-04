@@ -26,6 +26,8 @@ setup(name="chef-registration-server",
       scripts=["registration-server/registration-server"]
     )
 
+print "\n\n------------- BETWEEN SETUP CALLS ------------\n\n"
+
 if os.path.isdir("deb_dist/chef-registration-server-%s" % (version)):
     shutil.rmtree("deb_dist/chef-registration-server-%s" % (version))
 
