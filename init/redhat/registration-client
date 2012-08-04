@@ -39,8 +39,7 @@ stop(){
 }
 
 status(){
-    # TODO: Query chef-client node state against server?
-    #pgrep -f ${DAEMON}
+    /usr/bin/true
     if [ $? -eq 0 ]; then
         echo_success
     else

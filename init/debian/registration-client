@@ -30,7 +30,8 @@ stop(){
         log_end_msg $?
     else
         echo "Incorrect runlevel, No-op";
-        log_end_msg /usr/bin/true
+        /usr/bin/true
+        log_end_msg $?
     fi;
 }
 
