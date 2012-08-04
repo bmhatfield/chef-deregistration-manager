@@ -19,7 +19,7 @@ DAEMON="registration-client"
 
 start(){
     echo "Starting $DAEMON..."
-    /usr/bin/true
+    /bin/true
     log_end_msg $?
 }
 
@@ -30,13 +30,13 @@ stop(){
         log_end_msg $?
     else
         echo "Incorrect runlevel, No-op";
-        /usr/bin/true
+        /bin/true
         log_end_msg $?
     fi;
 }
 
 status(){
-    /usr/bin/true
+    /bin/true
     log_end_msg $?
 }
 

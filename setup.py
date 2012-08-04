@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from distutils.core import setup
 import platform
-import shutil
-import os
 
 version = "0.7"
 

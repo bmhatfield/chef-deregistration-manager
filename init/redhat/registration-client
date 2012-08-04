@@ -13,7 +13,7 @@ DAEMON=""
 
 start(){
     echo "Starting $DAEMON..."
-    /usr/bin/true
+    /bin/true
     if [ $? -eq 0 ]; then
         echo_success
     else
@@ -39,7 +39,7 @@ stop(){
 }
 
 status(){
-    /usr/bin/true
+    /bin/true
     if [ $? -eq 0 ]; then
         echo_success
     else
