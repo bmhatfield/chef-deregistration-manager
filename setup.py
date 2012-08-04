@@ -13,33 +13,17 @@ elif platform.uname()[0] == 'Darwin':
 else:
     distro = platform.dist()[0]
 
-setup(name="chef-registration-server",
+setup(name="chef-registration",
       version=version,
-      description="Chef Client Cloud Registration Management Server",
+      description="Chef Client Deregestration for Dynamic, Autoscaled Cloud Environments",
       author="Brian Hatfield",
       author_email="bmhatfield@gmail.com",
       url="https://github.com/bmhatfield/chef-deregistration-manager",
       packages=['clientqueue', 'message'],
       package_dir={'': 'lib'},
-      data_files=[('/etc/init.d/', ["init/%s/registration-server" % distro]),
-                  ("/etc/chef-registration/server", ["registration-server/example.cfg"])],
-      scripts=["registration-server/registration-server"]
-    )
-
-print "\n\n------------- BETWEEN SETUP CALLS ------------\n\n"
-
-if os.path.isdir("deb_dist/chef-registration-server-%s" % (version)):
-    shutil.rmtree("deb_dist/chef-registration-server-%s" % (version))
-
-setup(name="chef-registration-client",
-      version=version,
-      description="Chef Client Cloud Registration Client",
-      author="Brian Hatfield",
-      author_email="bmhatfield@gmail.com",
-      url="https://github.com/bmhatfield/chef-deregistration-manager",
-      packages=['clientqueue', 'message'],
-      package_dir={'': 'lib'},
-      data_files=[('/etc/init.d/', ["init/%s/registration-client" % distro]),
-                  ("/etc/chef-registration/client", ["registration-client/example.cfg"])],
-      scripts=["registration-client/registration-client"]
+      data_files=[('/etc/init.d/', ["init/%s/registration-server" % distro, "init/%s/registration-client" % distro]),
+                  ("/etc/chef-registration/server", ["registration-server/example.cfg"]),
+                  ("/etc/chef-registration/client", ["registration-client/example.cfg"])
+                 ],
+      scripts=["registration-server/registration-server", "registration-client/registration-client"]
     )
