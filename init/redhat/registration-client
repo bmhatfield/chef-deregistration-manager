@@ -8,8 +8,8 @@ if [ -e /etc/rc.d/init.d/functions ]; then
     . /etc/rc.d/init.d/functions;
 fi;
 
-DAEMON_DIR="/usr/bin"
-DAEMON=""
+DAEMON_DIR="/opt/chef-registration/bin"
+DAEMON="registration-client"
 
 start(){
     echo "Starting $DAEMON..."

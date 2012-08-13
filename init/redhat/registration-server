@@ -8,7 +8,7 @@ if [ -e /etc/rc.d/init.d/functions ]; then
     . /etc/rc.d/init.d/functions;
 fi;
 
-DAEMON_DIR="/opt/chef-registration"
+DAEMON_DIR="/opt/chef-registration/bin"
 DAEMON="registration-server"
 
 start(){

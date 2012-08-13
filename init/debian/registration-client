@@ -14,7 +14,7 @@ if [ -e /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions;
 fi;
 
-DAEMON_DIR="/opt/chef-registration"
+DAEMON_DIR="/opt/chef-registration/bin"
 DAEMON="registration-client"
 
 start(){
