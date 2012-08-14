@@ -2,16 +2,16 @@
 #
 #
 #
-APPLICATION_VERSION = 0.7
+APPLICATION_VERSION = 0.9
+APPLICATION_PREFIX = "/opt/chef-registration"
 
 import os
 import sys
 import optparse
 import configobj
 
-# A temporary hack while this is in development
-if os.path.isdir("/Users/bhatfield/Documents/dev"):
-    sys.path.append("lib")
+if os.path.isdir(os.path.join(APPLICATION_PREFIX, "lib")):
+    sys.path.append(os.path.join(APPLICATION_PREFIX, "lib"))
 
 import clientqueue.queue
 import message
