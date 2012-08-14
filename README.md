@@ -7,6 +7,7 @@ Building Debian Packages
 ------------------------
     sudo aptitude install build-essential git python-stdeb
     git clone https://github.com/bmhatfield/chef-deregistration-manager.git
+    cd chef-deregistration-manager
     python setup.py --command-packages=stdeb.command bdist_deb
 
 chef-deregistration-manager
