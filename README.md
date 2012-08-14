@@ -3,6 +3,12 @@ chef-deregistration-manager
 
 **Queue Based Chef Client Deregistration for the Cloud**
 
+Building Debian Packages
+------------------------
+    sudo aptitude install build-essential git python-stdeb
+    git clone https://github.com/bmhatfield/chef-deregistration-manager.git
+    python setup.py --command-packages=stdeb.command bdist_deb
+
 chef-deregistration-manager
 ---------------------------
     Polls SQS
