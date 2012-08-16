@@ -56,8 +56,8 @@ logging.info("Running with the following config settings:\n%s\n%s", config, opti
 
 # Configure Chef API Client
 try:
-    if config['chef']['host'] is not None and config['chef']['key'] is not None and config['chef']['client'] is not None:
-        api = chef.ChefApi(config['chef']['host'], config['chef']['key'], config['chef']['client'])
+    if None not in [config['chef']['host'], config['chef']['key'], config['chef']['client']]:
+        api = chef.ChefAPI(config['chef']['host'], config['chef']['key'], config['chef']['client'])
     else:
         api = chef.autoconfigure()
 
