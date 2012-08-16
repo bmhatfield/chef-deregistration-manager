@@ -1,12 +1,6 @@
 import os
-import sys
 import logging
 import json
-
-# A temporary hack while this is in development
-if os.path.isdir("/Users/bhatfield/Documents/dev"):
-    sys.path.append("/Users/bhatfield/Documents/dev/pychef")
-
 import chef
 
 

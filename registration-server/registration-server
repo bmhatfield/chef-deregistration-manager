@@ -4,7 +4,6 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_VERSION = "0.9.5"
 APPLICATION_PREFIX = "/opt/chef-registration"
 
 import os
@@ -23,7 +22,7 @@ import nagcgi
 import chef
 
 # Read Command Line Options
-parser = optparse.OptionParser(usage="%prog [options]", version="%prog " + str(APPLICATION_VERSION))
+parser = optparse.OptionParser(usage="%prog [options]")
 parser.add_option("-c", "--config", dest="config", default="/etc/chef-registration/server/server.cfg", help="Configuration file path")
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Log extra debug output")
 parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run", default=False, help="Don't actually delete nodes/clients from chef server")
@@ -47,7 +46,7 @@ else:
 
 # Configure Logging
 if config['general']['daemon']:
-    logging.basicConfig(level=logging.INFO, filename='manager.log')
+    logging.basicConfig(level=logging.INFO, filename=os.path.join(APPLICATION_PREFIX, 'manager.log'))
 else:
     logging.basicConfig(level=logging.INFO)
 
@@ -67,7 +66,10 @@ except:
     sys.exit(1)
 
 # Configure ChefRegistrationHandler
-messagehandler = message.ChefRegistrationHandler(api, backup_dir=config['general']['backup_dir'])
+if not os.path.exists(os.path.join(APPLICATION_PREFIX, config['general']['backup_dir'])):
+    os.mkdir(os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
+
+messagehandler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
 
 # Configure Nagios CGI Client
 if config['nagios']['use']:

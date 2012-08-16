@@ -2,7 +2,6 @@
 #
 #
 #
-APPLICATION_VERSION = 0.9
 APPLICATION_PREFIX = "/opt/chef-registration"
 
 import os
@@ -17,7 +16,7 @@ import clientqueue.queue
 import message
 
 # Read Command Line Options
-parser = optparse.OptionParser(usage="%prog [options] --chef-node=node_name", version="%prog " + str(APPLICATION_VERSION))
+parser = optparse.OptionParser(usage="%prog [options] --chef-node=node_name")
 parser.add_option("--method", dest="method", default="deregister", help="The client registration method (not implemented)")
 parser.add_option("--chef-node", dest="chef_node", default=None, help="[REQUIRED] The chef node name")
 parser.add_option("--nagios-node", dest="nagios_node", default=None, help="The name of the nagios client to put in downtime. If this is not specified, it will be set to the value of --chef_node")
