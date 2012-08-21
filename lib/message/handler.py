@@ -27,6 +27,11 @@ class ChefRegistrationHandler():
     def deregister(self, message):
         try:
             node = chef.Node(message.message["chef_name"])
+
+            if "instance_id" in message.message:
+                if node.attributes["ec2"]["instance_id"] != message.message["instance_id"]:
+                    raise ValueError("Instance ID provided (%s) does not match Chef's EC2 ID (%s) for this node")
+
             if self.backup("chef-node-%s" % (message.message["chef_name"]), json.dumps(node.attributes.to_dict())):
                 node.delete()
         except chef.exceptions.ChefServerNotFoundError:
