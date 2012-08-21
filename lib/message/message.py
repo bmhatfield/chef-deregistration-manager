@@ -5,7 +5,7 @@ class MessageFormat():
     """
     Defines interface and common methods for message formats.
     """
-    required_params = None
+    required_params = []
 
     def __init__(self, raw_message):
         if isinstance(raw_message, str) or isinstance(raw_message, unicode):
