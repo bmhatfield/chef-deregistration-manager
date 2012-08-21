@@ -2,7 +2,7 @@
 from distutils.core import setup
 import platform
 
-version = "0.9.7"
+version = "0.9.8"
 
 if platform.dist()[0] == 'Ubuntu':
     distro = 'debian'
