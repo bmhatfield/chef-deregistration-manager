@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import chef
+import time
 
 
 class ChefRegistrationHandler():
@@ -17,7 +18,7 @@ class ChefRegistrationHandler():
     def backup(self, filename, contents):
         if os.path.exists(self.backup_dir) and os.path.isdir(self.backup_dir):
             logging.info("Writing backup: %s", os.path.join(self.backup_dir, filename))
-            handle = open(os.path.join(self.backup_dir, filename), 'w')
+            handle = open(os.path.join(self.backup_dir, "%s-%s" % (filename, int(time.time()))), 'w')
             handle.write(contents)
             return True
         else:
