@@ -46,10 +46,12 @@ class SQSQueue(Queue):
         m = self.queue.read()
 
         if m is not None:
-            self.queue.delete_message(m)
-            return(m.get_body())
-        else:
-            return("")
+            message_body = m.get_body()
+            if len(message_body) > 0:
+                self.queue.delete_message(m)
+                return(message_body)
+
+        return False
 
     def __len__(self):
         return(self.queue.count())

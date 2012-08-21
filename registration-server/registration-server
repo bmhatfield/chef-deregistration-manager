@@ -136,7 +136,7 @@ def main():
         if len(q) > 0:
             try:
                 rawmessage = q.dequeue()
-                if len(rawmessage) > 0:
+                if rawmessage:
                     logging.info("Message found:\n%s", rawmessage)
                     msg = message.Message(rawmessage)
 
