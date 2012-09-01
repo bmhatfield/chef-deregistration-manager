@@ -8,20 +8,29 @@ class MessageFormat():
     required_params = []
 
     def __init__(self, raw_message):
-        if isinstance(raw_message, str) or isinstance(raw_message, unicode):
-            self.message = json.loads(raw_message)
-        else:
-            self.message = raw_message
-
-        if "type" not in self.message:
-            raise ValueError("Message missing 'type' key.")
+        self.raw_message = raw_message
 
     @property
     def missing(self):
         return([x for x in self.required_params if x not in self.message])
 
+    def get_message(self):
+        if isinstance(self.raw_message, str) or isinstance(self.raw_message, unicode):
+            return json.loads(self.raw_message)
+        else:
+            return self.raw_message
+
     def is_valid_format(self):
-        if self.message['type'] == self._type:
+        message = self.get_message()
+
+        if "type" in message:
+            message_type = message['type']
+        elif "Type" in message:
+            message_type = message['Type']
+        else:
+            raise KeyError("Message missing 'Type' or 'type' key!")
+
+        if message_type == self._type:
             return self.validate()
         else:
             return False
@@ -45,8 +54,8 @@ class AutoscalingMessage(MessageFormat):
     """
     Class to handle messages from Amazon's Autoscaling -> SNS -> SQS workflow.
     """
-    _type = ''
-    required_params = [""]
+    _type = 'Notification'
+    required_params = ["Message", "TopicArn", "MessageId"]
 
 
 class Message():

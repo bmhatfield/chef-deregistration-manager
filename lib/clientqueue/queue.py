@@ -55,3 +55,7 @@ class SQSQueue(Queue):
 
     def __len__(self):
         return(self.queue.count())
+
+
+class AutoscalingQueue(SQSQueue):
+    pass
