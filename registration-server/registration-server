@@ -4,7 +4,8 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-APPLICATION_PREFIX = "/opt/chef-registration"
+#APPLICATION_PREFIX = "/opt/chef-registration"
+APPLICATION_PREFIX = "/Users/bhatfield/Documents/dev/chef-deregistration-manager"
 
 import os
 import sys
@@ -12,12 +13,15 @@ import time
 import daemon
 import logging
 import optparse
+import threading
 import configobj
 
 if os.path.isdir(os.path.join(APPLICATION_PREFIX, "lib")):
     sys.path.append(os.path.join(APPLICATION_PREFIX, "lib"))
 
+import clientqueue.poller
 import clientqueue.queue
+import message
 import nagcgi
 import chef
 
@@ -36,7 +40,7 @@ if os.path.exists(options.config):
         'aws': {'secret_key': None, 'access_key': None},
         'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
         'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
-        'chef': {'host': 'localhost', 'key': 'client.pem', 'client': None}
+        'chef': {'host': 'localhost', 'key': None, 'client': None}
     }
     config.merge(defaults)
     config.merge(user_config)
@@ -45,10 +49,16 @@ else:
     sys.exit(1)
 
 # Configure Logging
-if config['general']['daemon']:
-    logging.basicConfig(level=logging.INFO, filename=os.path.join(APPLICATION_PREFIX, 'manager.log'))
+if options.verbose:
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
+    log_level = logging.DEBUG
 else:
-    logging.basicConfig(level=logging.INFO)
+    log_level = logging.INFO
+
+if config['general']['daemon']:
+    logging.basicConfig(level=log_level, filename=os.path.join(APPLICATION_PREFIX, 'manager.log'))
+else:
+    logging.basicConfig(level=log_level)
 
 # Write out configuration values
 logging.info("Running with the following config settings:\n%s\n%s", config, options)
@@ -56,13 +66,15 @@ logging.info("Running with the following config settings:\n%s\n%s", config, opti
 # Configure Chef API Client
 try:
     if None not in [config['chef']['host'], config['chef']['key'], config['chef']['client']]:
+        logging.debug("Manual Chef Client: \n%s\n%s\n%s", config['chef']['host'], config['chef']['key'], config['chef']['client'])
         api = chef.ChefAPI(config['chef']['host'], config['chef']['key'], config['chef']['client'])
     else:
+        logging.debug("Autoconfiguring Chef Client")
         api = chef.autoconfigure()
 
     logging.info("Running against the following chef server: %s" % (api.url))
-except:
-    logging.error("Could not configure Chef Client.")
+except Exception as e:
+    logging.exception("Could not configure Chef Client: \n %s", str(e))
     sys.exit(1)
 
 # Configure ChefRegistrationHandler
@@ -79,26 +91,26 @@ if config['nagios']['use']:
 logging.debug("Configuring Queue Client: ", config['queue'])
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
 
+# Configure MessageHandler
+logging.debug("Configuring MessageHandler")
+handler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
+
 
 def main():
-    # Control Variable
-    trigger_chef_run = False
-
+    q_poll_thread = False
     while True:
         logging.debug("Waking up queue poll cycle.")
 
-        """ NEW QUEUE POLLING BEHAVIOR HERE """
-
-        """ DO SOMETHING TO CHECK THE STATE OF THE THREADS BEFORE EXECUTING"""
-        if trigger_chef_run:
-            # TODO: Spin off a subprocess for a chef-client run,
-            #       assuming we are on a monitor server (async? sync?)
-            logging.info("Triggering chef-client run!")
-            trigger_chef_run = False
+        if not q_poll_thread or not q_poll_thread.is_alive():
+            logging.debug("Starting New Poller")
+            q_poll_thread = clientqueue.poller.QueuePoller(queue=q, handler=handler, options=options, config=config)
+            q_poll_thread.start()
 
         # Go to sleep if there was nothing in the queue.
-        logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
+        logging.debug("Active Threads: %s", threading.enumerate())
+        logging.debug("Main loop sleeping for %s secs.", config['queue']['poll_interval'])
         time.sleep(config['queue']['poll_interval'])
+
 
 if config['general']['daemon']:
     try:
