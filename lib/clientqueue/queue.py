@@ -58,4 +58,15 @@ class SQSQueue(Queue):
 
 
 class AutoscalingQueue(SQSQueue):
-    pass
+    """
+    This class should override the __init__ method of the SQSQueue class.
+    The purposes of overriding the init method is to additionally set up SNS topics,
+    then link the queue and the topic together.
+
+    Creates SNS Topic with name like DC
+    Creates SQS Queue with name like DC
+    Adds SQS Queue as subscriber to SNS Topic with SQS Queue's ARN
+    Adds SQS Permissions to SQS Queue with SNS's ARN
+    """
+    def __init__(self, queue_name, access_key, secret_key):
+        pass
