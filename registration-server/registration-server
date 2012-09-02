@@ -99,15 +99,14 @@ handler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATI
 def main():
     q_poll_thread = False
     while True:
-        logging.debug("Waking up queue poll cycle.")
+        logging.debug("Main loop waking up from sleep.")
+        logging.debug("Current Active Threads: %s", threading.enumerate())
 
         if not q_poll_thread or not q_poll_thread.is_alive():
-            logging.debug("Starting New Poller")
             q_poll_thread = clientqueue.poller.QueuePoller(queue=q, handler=handler, options=options, config=config)
             q_poll_thread.start()
 
         # Go to sleep if there was nothing in the queue.
-        logging.debug("Active Threads: %s", threading.enumerate())
         logging.debug("Main loop sleeping for %s secs.", config['queue']['poll_interval'])
         time.sleep(config['queue']['poll_interval'])
 

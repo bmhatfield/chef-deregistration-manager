@@ -27,6 +27,7 @@ class SQSQueue(Queue):
     """
 
     def __init__(self, queue_name, access_key, secret_key):
+        self.name = queue_name
         self.connection = boto.sqs.connection.SQSConnection(access_key, secret_key)
         self.queue = self.connection.get_queue(queue_name)
 

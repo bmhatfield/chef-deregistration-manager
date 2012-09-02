@@ -11,12 +11,15 @@ class QueuePoller(threading.Thread):
         self.messagehandler = handler
 
     def run(self):
+        logging.debug("Thread: QueuePoller(%s)(ID: %s)", self.queue.name, self.ident)
+
         while len(self.queue) > 0:
             try:
                 rawmessage = self.queue.dequeue()
                 if rawmessage:
                     logging.info("Message found:\n%s", rawmessage)
                     msg = message.Message(rawmessage)
+                    logging.debug("Message loaded as: %s", msg.format.__class__.__name__)
 
                     if not self.options.dry_run:
                         self.messagehandler.process(msg)
@@ -27,4 +30,4 @@ class QueuePoller(threading.Thread):
                 logging.exception("Exception while processing message:\n %s", str(e))
                 continue
 
-        logging.debug("Thread work complete.")
+        logging.debug("Thread work complete (%s)", self.ident)
