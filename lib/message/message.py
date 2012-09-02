@@ -6,27 +6,40 @@ class MessageFormat():
     Defines interface and common methods for message formats.
     """
     required_params = []
+    nested_message_key = False
 
     def __init__(self, raw_message):
         self.raw_message = raw_message
 
+        self.message = self.get_message()
+
     @property
     def missing(self):
-        return([x for x in self.required_params if x not in self.message])
+        if self.message:
+            return([x for x in self.required_params if x not in self.message])
+        else:
+            return self.required_params
 
     def get_message(self):
         if isinstance(self.raw_message, str) or isinstance(self.raw_message, unicode):
-            return json.loads(self.raw_message)
-        else:
-            return self.raw_message
+            try:
+                json_message = json.loads(self.raw_message)
+
+                if self.nested_message_key:
+                    if self.nested_message_key in json_message:
+                        return json.loads(json_message[self.nested_message_key])
+                    else:
+                        raise KeyError("%s not in nested message of type %s" % (self.nested_message_key, self.__class__.__name__))
+                else:
+                    return json_message
+            except ValueError:
+                return self.raw_message
 
     def is_valid_format(self):
-        message = self.get_message()
-
-        if "type" in message:
-            message_type = message['type']
-        elif "Type" in message:
-            message_type = message['Type']
+        if "type" in self.message:
+            message_type = self.message['type']
+        elif "Type" in self.message:
+            message_type = self.message['Type']
         else:
             raise KeyError("Message missing 'Type' or 'type' key!")
 
@@ -55,7 +68,8 @@ class AutoscalingMessage(MessageFormat):
     Class to handle messages from Amazon's Autoscaling -> SNS -> SQS workflow.
     """
     _type = 'Notification'
-    required_params = ["Message", "TopicArn", "MessageId"]
+    nested_message_key = "Message"
+    required_params = ["EC2InstanceId", "Event", "AutoScalingGroupName"]
 
 
 class Message():
