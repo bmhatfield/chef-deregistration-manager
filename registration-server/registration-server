@@ -9,6 +9,7 @@ APPLICATION_PREFIX = "/opt/chef-registration"
 import os
 import sys
 import time
+import daemon
 import logging
 import optparse
 import configobj
@@ -17,7 +18,6 @@ if os.path.isdir(os.path.join(APPLICATION_PREFIX, "lib")):
     sys.path.append(os.path.join(APPLICATION_PREFIX, "lib"))
 
 import clientqueue.queue
-import message
 import nagcgi
 import chef
 
@@ -69,7 +69,6 @@ except:
 if not os.path.exists(os.path.join(APPLICATION_PREFIX, config['general']['backup_dir'])):
     os.mkdir(os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
 
-messagehandler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
 
 # Configure Nagios CGI Client
 if config['nagios']['use']:
@@ -81,51 +80,6 @@ logging.debug("Configuring Queue Client: ", config['queue'])
 q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
 
 
-def daemonize():
-    # Daemonize (http://code.activestate.com/recipes/278731/)
-    logging.info("Daemonizing...")
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # Exit first parent
-            sys.exit(0)
-    except OSError, e:
-        sys.stderr.write("Failed to fork process." % (e))
-        sys.exit(1)
-
-    # Decouple from parent environment
-    os.setsid()
-    os.umask(0)
-
-    # Fork 2
-    try:
-        pid = os.fork()
-        if pid > 0:
-            # Exit second parent
-            sys.exit(0)
-    except OSError, e:
-        sys.stderr.write("Failed to fork process." % (e))
-        sys.exit(1)
-
-    # Close file descriptors so that we can detach
-    sys.stdout.close()
-    sys.stderr.close()
-    sys.stdin.close()
-    os.close(0)
-    os.close(1)
-    os.close(2)
-
-    try:
-        pid = str(os.getpid())
-        pf = file(config['general']['pidfile'], 'w+')
-        pf.write("%s\n" % pid)
-        pf.close()
-        logging.debug("Wrote child PID file: %s" % (config['general']['pidfile']))
-    except IOError, e:
-        logging.error("Failed to write child PID file: %s" % (e))
-        sys.exit(1)
-
-
 def main():
     # Control Variable
     trigger_chef_run = False
@@ -133,38 +87,24 @@ def main():
     while True:
         logging.debug("Waking up queue poll cycle.")
 
-        if len(q) > 0:
-            try:
-                rawmessage = q.dequeue()
-                if rawmessage:
-                    logging.info("Message found:\n%s", rawmessage)
-                    msg = message.Message(rawmessage)
+        """ NEW QUEUE POLLING BEHAVIOR HERE """
 
-                    if not options.dry_run:
-                        if config['nagios']['use']:
-                            logging.info("Scheduling Nagios downtime for %s", msg.message["nagios_name"])
-                            nagios.schedule_host_downtime(hostname=msg.message["nagios_name"])
+        """ DO SOMETHING TO CHECK THE STATE OF THE THREADS BEFORE EXECUTING"""
+        if trigger_chef_run:
+            # TODO: Spin off a subprocess for a chef-client run,
+            #       assuming we are on a monitor server (async? sync?)
+            logging.info("Triggering chef-client run!")
+            trigger_chef_run = False
 
-                        messagehandler.process(msg)
-                        trigger_chef_run = True
-                else:
-                    logging.warning("Disregarding empty message from queue. (SQS bug due to fast re-poll of queue.)")
-                    continue
-            except Exception as e:
-                logging.exception("Exception while processing message:\n %s", str(e))
-                continue
-        else:
-            if trigger_chef_run:
-                # TODO: Spin off a subprocess for a chef-client run,
-                #       assuming we are on a monitor server (async? sync?)
-                logging.info("Triggering chef-client run!")
-                trigger_chef_run = False
-
-            # Go to sleep if there was nothing in the queue.
-            logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
-            time.sleep(config['queue']['poll_interval'])
+        # Go to sleep if there was nothing in the queue.
+        logging.debug("Nothing to do. Sleeping for %s secs.", config['queue']['poll_interval'])
+        time.sleep(config['queue']['poll_interval'])
 
 if config['general']['daemon']:
-    daemonize()
-
-main()
+    try:
+        with daemon.DaemonContext(working_directory="."):
+            main()
+    except Exception as e:
+        logging.exception("Exception while daemonizing:\n %s", str(e))
+else:
+    main()
