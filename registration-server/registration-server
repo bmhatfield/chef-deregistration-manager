@@ -4,8 +4,7 @@
 # It will then process the event according to type, such as "deregistration", which
 # implies certain actions such as Nagios downtime, Chef Client deregistration, etc.
 #
-#APPLICATION_PREFIX = "/opt/chef-registration"
-APPLICATION_PREFIX = "/Users/bhatfield/Documents/dev/chef-deregistration-manager"
+APPLICATION_PREFIX = "/opt/chef-registration"
 
 import os
 import sys
@@ -18,6 +17,9 @@ import configobj
 
 if os.path.isdir(os.path.join(APPLICATION_PREFIX, "lib")):
     sys.path.append(os.path.join(APPLICATION_PREFIX, "lib"))
+else:
+    APPLICATION_PREFIX = os.getcwd()
+    sys.path.append(os.path.join(os.getcwd(), "lib"))
 
 import clientqueue.poller
 import clientqueue.queue
@@ -50,7 +52,6 @@ else:
 
 # Configure Logging
 if options.verbose:
-    logging.getLogger('boto').setLevel(logging.CRITICAL)
     log_level = logging.DEBUG
 else:
     log_level = logging.INFO
@@ -60,7 +61,12 @@ if config['general']['daemon']:
 else:
     logging.basicConfig(level=log_level)
 
+logging.getLogger('boto').setLevel(logging.CRITICAL)
+
+print dir(logging.handlers)
+
 # Write out configuration values
+logging.info("Running in %s", APPLICATION_PREFIX)
 logging.info("Running with the following config settings:\n%s\n%s", config, options)
 
 # Configure Chef API Client
@@ -113,7 +119,8 @@ def main():
 
 if config['general']['daemon']:
     try:
-        with daemon.DaemonContext(working_directory="."):
+        with daemon.DaemonContext(working_directory=APPLICATION_PREFIX):
+            logging.debug("Daemonized.")
             main()
     except Exception as e:
         logging.exception("Exception while daemonizing:\n %s", str(e))
