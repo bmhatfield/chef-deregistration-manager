@@ -119,7 +119,8 @@ def main():
 
 if config['general']['daemon']:
     try:
-        with daemon.DaemonContext(working_directory=APPLICATION_PREFIX):
+        logger = logging.getLogger()
+        with daemon.DaemonContext(working_directory=APPLICATION_PREFIX, files_preserve=[logger.handlers[0].stream]):
             logging.debug("Daemonized.")
             main()
     except Exception as e:
