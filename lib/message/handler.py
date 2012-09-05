@@ -13,11 +13,11 @@ class ChefRegistrationHandler():
 
     def process(self, message):
         if message.format.__class__.__name__ == "AutoscalingMessage":
-            nodes = chef.Search("node", q="instance_id:%s" % (message.message['EC2InstanceId']))
+            nodes = chef.Search("node", q="instance_id:%s" % (message.message['EC2InstanceId']), api=self.api)
             if nodes.total == 1:
                 self._remove(chef_name=nodes[0]['name'], instance_id=message.message['EC2InstanceId'])
             else:
-                raise ValueError("API Returned %s nodes, expected 1" % (nodes.total))
+                raise ValueError("Search returned %s nodes, expected 1" % (nodes.total))
 
         elif message.format.__class__.__name__ == "RegistrationMessage":
             if message.message["method"] == "deregister":
@@ -33,7 +33,7 @@ class ChefRegistrationHandler():
 
     def _remove(self, chef_name, instance_id=None, backup=True):
         try:
-            client = chef.Client(chef_name)
+            client = chef.Client(chef_name, api=self.api)
             if backup and self._backup("chef-client-%s" % (chef_name), json.dumps(client.to_dict())):
                 client.delete()
         except chef.exceptions.ChefServerNotFoundError:
@@ -42,7 +42,7 @@ class ChefRegistrationHandler():
             logging.exception("Exception while deleting chef client:\n %s", str(e))
 
         try:
-            node = chef.Node(chef_name)
+            node = chef.Node(chef_name, api=self.api)
             if instance_id:
                 if node.attributes["ec2"]["instance_id"] != instance_id:
                     raise ValueError("Instance ID (%s) does not match attribute ID (%s)" %
