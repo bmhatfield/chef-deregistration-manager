@@ -28,12 +28,12 @@ class SQSQueue(Queue):
 
     def __init__(self, queue_name, access_key, secret_key):
         self.name = queue_name
-        self.connection = boto.sqs.connection.SQSConnection(access_key, secret_key)
-        self.queue = self.connection.get_queue(queue_name)
+        self.sqs = boto.sqs.connection.SQSConnection(access_key, secret_key)
+        self.queue = self.sqs.get_queue(queue_name)
 
         if self.queue is None:
             logging.info("Creating queue: %s", queue_name)
-            self.queue = self.connection.create_queue(queue_name)
+            self.queue = self.sqs.create_queue(queue_name)
 
         self.queue.set_message_class(boto.sqs.message.RawMessage)
 
@@ -61,7 +61,7 @@ class SQSQueue(Queue):
 class AutoscalingQueue(SQSQueue):
     """
     This class should override the __init__ method of the SQSQueue class.
-    The purposes of overriding the init method is to additionally set up SNS topics,
+    The purpose of overriding the init method is to additionally set up SNS topics,
     then link the queue and the topic together.
 
     Creates SNS Topic with name like DC
@@ -70,4 +70,5 @@ class AutoscalingQueue(SQSQueue):
     Adds SQS Permissions to SQS Queue with SNS's ARN
     """
     def __init__(self, queue_name, access_key, secret_key):
-        pass
+        SQSQueue.__init__(self, queue_name, access_key, secret_key)
+        self.sns = boto.sns.SNSConnection(access_key, secret_key)
