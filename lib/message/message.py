@@ -60,9 +60,12 @@ class AutoscalingMessage(MessageFormat):
         if self.json:
             if "Type" in self.json and self.json["Type"] == self._type:
                 if "Message" in self.json:
-                    message = json.loads(self.json["Message"])
-                    if self.validate(message):
-                        return message
+                    try:
+                        message = json.loads(self.json["Message"])
+                        if self.validate(message):
+                            return message
+                    except:
+                        return False
 
         return False
 
