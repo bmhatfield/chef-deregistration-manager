@@ -102,10 +102,3 @@ class AutoscalingQueue(SQSQueue):
                 logging.warning("%s is not subscribed to %s", self.name, self.topic_arn)
                 logging.info("Subscribing %s to %s", self.name, self.topic_arn)
                 self.sns.subscribe(self.topic_arn, 'SQS', self.queue_arn)
-
-
-
-
-
-
-
