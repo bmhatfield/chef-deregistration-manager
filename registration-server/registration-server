@@ -95,7 +95,7 @@ if config['nagios']['use']:
 
 # Configure Deregistration Queue Client
 logging.debug("Configuring Queue Client: ", config['queue'])
-q = clientqueue.queue.SQSQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
+q = clientqueue.queue.AutoscalingQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
 
 # Configure MessageHandler
 logging.debug("Configuring MessageHandler")

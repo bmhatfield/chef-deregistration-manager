@@ -2,6 +2,7 @@ import json
 import logging
 import boto.sqs.connection
 import boto.sqs.message
+import boto.sns
 
 
 class Queue():
