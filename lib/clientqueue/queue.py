@@ -81,6 +81,10 @@ class AutoscalingQueue(SQSQueue):
         s = self.sns.get_all_subscriptions_by_topic(self.topic_arn)
         self.subscriptions = [sub['Endpoint'] for sub in s['ListSubscriptionsByTopicResponse']['ListSubscriptionsByTopicResult']['Subscriptions']]
 
+        # The below crazy list comprehension is similar to doing the following:
+        # for statement in policy['Statement']:
+        #     for condition in statement['Condition']:
+        #         list.append(statement['Condition'][condition]['aws:SourceArn'])
         p = json.loads(self.queue.get_attributes('Policy')['Policy'])
         self.permitted_topics = [s['Condition'][d]['aws:SourceArn'] for d in [c for s in p['Statement'] for c in s['Condition']]]
 
