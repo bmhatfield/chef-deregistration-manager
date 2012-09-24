@@ -86,8 +86,12 @@ class AutoscalingQueue(SQSQueue):
         # for statement in policy['Statement']:
         #     for condition in statement['Condition']:
         #         list.append(statement['Condition'][condition]['aws:SourceArn'])
-        p = json.loads(self.queue.get_attributes('Policy')['Policy'])
-        self.permitted_topics = [s['Condition'][d]['aws:SourceArn'] for d in [c for s in p['Statement'] for c in s['Condition']]]
+        policy_data = self.queue.get_attributes('Policy')
+        if "Policy" in policy_data:
+            p = json.loads(policy_data['Policy'])
+            self.permitted_topics = [s['Condition'][d]['aws:SourceArn'] for d in [c for s in p['Statement'] for c in s['Condition']]]
+        else:
+            self.permitted_topics = []
 
         if self.topic_arn not in self.permitted_topics:
             logging.warning("Topic ARN %s not permitted to write to queue (%s)", self.topic_arn, self.name)
