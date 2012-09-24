@@ -63,8 +63,6 @@ else:
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 
-print dir(logging.handlers)
-
 # Write out configuration values
 logging.info("Running in %s", APPLICATION_PREFIX)
 logging.info("Running with the following config settings:\n%s\n%s", config, options)
