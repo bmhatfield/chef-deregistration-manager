@@ -42,7 +42,7 @@ if os.path.exists(options.config):
         'aws': {'secret_key': None, 'access_key': None},
         'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
         'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
-        'chef': {'host': 'localhost', 'key': None, 'client': None}
+        'chef': {'host': 'localhost', 'key': None, 'client': None, 'bin': '/usr/bin/chef-client'}
     }
     config.merge(defaults)
     config.merge(user_config)
