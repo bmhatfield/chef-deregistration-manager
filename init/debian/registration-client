@@ -20,39 +20,39 @@ DAEMON="registration-client"
 start(){
     echo "Starting $DAEMON..."
     /bin/true
-    log_end_msg $?
 }
 
 stop(){
     if [ "`runlevel | cut -d " " -f 2`" == 0 ]; then
         echo "Stopping $DAEMON..."
         ${DAEMON_DIR}/${DAEMON} --chef-node `hostname -f` --instance-id `curl "http://169.254.169.254/1.0/meta-data/instance-id"`
-        log_end_msg $?
     else
         echo "Incorrect runlevel, No-op";
         /bin/true
-        log_end_msg $?
     fi;
 }
 
 status(){
     /bin/true
-    log_end_msg $?
 }
 
 case "$1" in
   start)
-    start 
+    start
+    log_end_msg $?
     ;;
   stop)
     stop
+    log_end_msg $?
     ;;
   status)
     status
+    log_end_msg $?
     ;;
   restart)
     stop
     start
+    log_end_msg $?
     ;;
   *)
     echo $"Usage: $0 {start|stop|restart|status}"
