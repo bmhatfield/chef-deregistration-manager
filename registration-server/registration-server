@@ -90,6 +90,8 @@ if not os.path.exists(os.path.join(APPLICATION_PREFIX, config['general']['backup
 if config['nagios']['use']:
     logging.debug("Configuring Nagios Client: ", config['nagios'])
     nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], password=config['nagios']['password'], debug=options.verbose)
+else:
+    nagios = None
 
 # Configure Deregistration Queue Client
 logging.debug("Configuring Queue Client: ", config['queue'])
@@ -97,7 +99,7 @@ q = clientqueue.queue.AutoscalingQueue("%s-%s" % (config['queue']['queue_name'],
 
 # Configure MessageHandler
 logging.debug("Configuring MessageHandler")
-handler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']))
+handler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']), nagios_api=nagios)
 
 
 def main():
