@@ -55,7 +55,7 @@ class ChefRegistrationHandler():
                     try:
                         self.nagios.schedule_host_downtime(hostname=chef_name)
                     except Exception as e:
-                        logging.exception("Unable to connect to Nagios (%s)\nException:\n" % (self.nagios.uri, str(e)))
+                        logging.exception("Unable to connect to Nagios (%s)\nException:\n%s" % (self.nagios.uri, str(e)))
 
         except chef.exceptions.ChefServerNotFoundError:
             logging.error("Node removal requested for non-existent chef node '%s'", chef_name)
