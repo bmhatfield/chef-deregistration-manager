@@ -12,7 +12,7 @@ DAEMON_DIR="/opt/chef-registration/bin"
 DAEMON="registration-client"
 
 start(){
-    echo "Starting $DAEMON..."
+    echo "${DAEMON}: No startup actions needed."
     /bin/true
     if [ $? -eq 0 ]; then
         echo_success

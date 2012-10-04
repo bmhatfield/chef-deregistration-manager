@@ -2,12 +2,10 @@
 from distutils.core import setup
 import platform
 
-version = "1.0.0"
+version = "1.0.1"
 
 if platform.dist()[0] == 'Ubuntu':
     distro = 'debian'
-elif platform.uname()[0] == 'Darwin':
-    distro = 'debian'  # A little hack for Mac testing
 else:
     distro = platform.dist()[0]
 

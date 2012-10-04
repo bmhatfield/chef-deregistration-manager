@@ -24,7 +24,7 @@ start(){
 
 stop(){
     echo "Stopping $DAEMON..."
-    pkill -f ${DAEMON}
+    pkill -f ${DAEMON_DIR}/${DAEMON}
     if [ $? -eq 0 ]; then
         echo_success
     else
@@ -34,7 +34,7 @@ stop(){
 }
 
 status(){
-    pgrep -f ${DAEMON}
+    pgrep -f ${DAEMON_DIR}/${DAEMON}
     if [ $? -eq 0 ]; then
         echo_success
     else
