@@ -13,7 +13,10 @@ class MessageFormat():
         try:
             self.json = json.loads(raw_message)
         except:
-            self.json = False
+            if type(self.raw_message) == dict:
+                self.json = self.raw_message
+            else:
+                self.json = False
 
         self.message = self.get_message()
         if not self.message:
