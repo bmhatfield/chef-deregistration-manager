@@ -41,7 +41,7 @@ if os.path.exists(options.config):
         'general': {'daemon': False, 'pidfile': 'manager.pid', 'backup_dir': 'backups'},
         'aws': {'secret_key': None, 'access_key': None},
         'queue': {'queue_name': None, 'queue_id': None, 'poll_interval': 15},
-        'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None},
+        'nagios': {'use': True, 'host': 'monitor', 'username': 'cgiservice', 'password': None, 'cgi_path': '/nagios/cgi-bin/cmd.cgi'},
         'chef': {'host': 'localhost', 'key': None, 'client': None, 'bin': '/usr/bin/chef-client'}
     }
     config.merge(defaults)
@@ -89,17 +89,31 @@ if not os.path.exists(os.path.join(APPLICATION_PREFIX, config['general']['backup
 # Configure Nagios CGI Client
 if config['nagios']['use']:
     logging.debug("Configuring Nagios Client: ", config['nagios'])
-    nagios = nagcgi.Nagcgi(config['nagios']['host'], userid=config['nagios']['username'], password=config['nagios']['password'], debug=options.verbose)
+    nagios = nagcgi.Nagcgi(
+        config['nagios']['host'],
+        userid=config['nagios']['username'],
+        password=config['nagios']['password'],
+        debug=options.verbose,
+        cgi=config['nagios']['cgi_path']
+    )
 else:
     nagios = None
 
 # Configure Deregistration Queue Client
 logging.debug("Configuring Queue Client: ", config['queue'])
-q = clientqueue.queue.AutoscalingQueue("%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']), config['aws']['access_key'], config['aws']['secret_key'])
+q = clientqueue.queue.AutoscalingQueue(
+    "%s-%s" % (config['queue']['queue_name'], config['queue']['queue_id']),
+    config['aws']['access_key'],
+    config['aws']['secret_key']
+)
 
 # Configure MessageHandler
 logging.debug("Configuring MessageHandler")
-handler = message.ChefRegistrationHandler(api, backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']), nagios_api=nagios)
+handler = message.ChefRegistrationHandler(
+    api,
+    backup_dir=os.path.join(APPLICATION_PREFIX, config['general']['backup_dir']),
+    nagios_api=nagios
+)
 
 
 def main():
