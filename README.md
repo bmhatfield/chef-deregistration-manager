@@ -52,11 +52,11 @@ chef-registration-init (clients)
 FAQ
 ---------------
 
-Q: It won't start.
-A: Make sure that the dependencies are installed, and that you've created server.cfg and client.cfg (the install creates example.cfg)
+Q: It won't start.  
+A: Make sure that the dependencies are installed, and that you've created server.cfg and client.cfg (the install creates example.cfg)  
 
-Q: Why would I put my AWS credentials on every host?! That's insecure!
-A: We use IAM to create credentials that only have permission to publish to the relevant queue. The server's credentials will need the ability to create and manage SNS endpoints as well as SQS queues, as well.
+Q: Why would I put my AWS credentials on every host?! That's insecure!  
+A: We use IAM to create credentials that only have permission to publish to the relevant queue. The server's credentials will need the ability to create and manage SNS endpoints as well as SQS queues, as well.  
 
 
 
